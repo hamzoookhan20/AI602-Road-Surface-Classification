@@ -7,3 +7,4 @@ scikit-image
 pillow
 torch
 torchvision
+gdown
