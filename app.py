@@ -26,21 +26,33 @@ with st.sidebar:
         st.info("📊 Mode: Random Forest")
 
 # --- 3. DYNAMIC MODEL LOADING ---
+# --- STEP 3: PROFESSIONAL MODEL LOADER ---
 @st.cache_resource
 def load_vit_model():
-    combined_filename = "rtk_vit_combined.pth"
-    
-    # If the combined file doesn't exist, join the chunks
-    if not os.path.exists(combined_filename):
-        with open(combined_filename, "wb") as f_out:
-            # Chunks must be joined in alphabetical order: aa, ab, ac, ad
-            chunks = sorted([f for f in os.listdir() if "rtk_vit_chunk_" in f])
-            for chunk in chunks:
-                with open(chunk, "rb") as f_in:
-                    f_out.write(f_in.read())
-                    
-    # Load the now-complete model
-    return torch.load(combined_filename, map_location=torch.device('cpu'))
+    # This is your specific File ID from Google Drive
+    file_id = '1a7UtWhQ0nMZEGhRrHqFcdpYIyuzkS2vU'
+    url = f'https://drive.google.com/uc?id={file_id}'
+    output = 'rtk_vit_model.pth'
+
+    # Download only if the file doesn't exist in the current session
+    if not os.path.exists(output):
+        with st.status("📥 Initializing Deep Learning Model (330MB)..."):
+            st.write("Connecting to Model Registry on Google Drive...")
+            # gdown handles the large file download seamlessly
+            gdown.download(url, output, quiet=False, fuzzy=True)
+            st.write("✅ Download Complete!")
+
+    # Load the PyTorch model
+    # map_location='cpu' ensures it works on Streamlit's servers without a GPU
+    model = torch.load(output, map_location=torch.device('cpu'))
+    model.eval()
+    return model
+
+# --- USAGE IN THE APP ---
+# When the user flips the toggle, this function is called
+if use_deep_learning:
+    model_vit = load_vit_model()
+    # Now use model_vit for your predictions
     
 model = load_models(use_deep_learning)
 categories = ['Asphalt', 'Paved', 'Unpaved']
