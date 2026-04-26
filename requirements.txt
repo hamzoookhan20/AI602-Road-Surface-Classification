@@ -5,3 +5,5 @@ scikit-learn
 joblib
 scikit-image
 pillow
+torch
+torchvision
