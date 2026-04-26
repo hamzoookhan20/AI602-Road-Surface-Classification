@@ -6,6 +6,8 @@ from PIL import Image
 from skimage.feature import hog
 import torch  # Required for ViT
 from torchvision import transforms # Required for ViT preprocessing
+import os
+import torch
 
 # --- 1. PAGE CONFIGURATION ---
 st.set_page_config(page_title="AI602: Road Surface Classifier", page_icon="🛣️")
@@ -25,20 +27,21 @@ with st.sidebar:
 
 # --- 3. DYNAMIC MODEL LOADING ---
 @st.cache_resource
-def load_models(is_deep):
-    if is_deep:
-        try:
-            # Loading the PyTorch model (you must upload 'rtk_vit_model.pth' to GitHub)
-            model = torch.load('rtk_vit_model.pth', map_location=torch.device('cpu'))
-            model.eval() # Set to evaluation mode
-            return model
-        except Exception as e:
-            st.error(f"ViT Model not found! Error: {e}")
-            return None
-    else:
-        # Loading your existing Classical ML model
-        return joblib.load('rtk_classical_model.pkl')
-
+def load_vit_model():
+    combined_filename = "rtk_vit_combined.pth"
+    
+    # If the combined file doesn't exist, join the chunks
+    if not os.path.exists(combined_filename):
+        with open(combined_filename, "wb") as f_out:
+            # Chunks must be joined in alphabetical order: aa, ab, ac, ad
+            chunks = sorted([f for f in os.listdir() if "rtk_vit_chunk_" in f])
+            for chunk in chunks:
+                with open(chunk, "rb") as f_in:
+                    f_out.write(f_in.read())
+                    
+    # Load the now-complete model
+    return torch.load(combined_filename, map_location=torch.device('cpu'))
+    
 model = load_models(use_deep_learning)
 categories = ['Asphalt', 'Paved', 'Unpaved']
 
